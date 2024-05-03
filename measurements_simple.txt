@@ -1,0 +1,13 @@
+Porto;24.2
+Tabora;21.9
+Guangzhou;23.9
+Willemstad;30.2
+Jerusalem;10.9
+Nakhon Ratchasima;29.0
+Lahore;22.6
+Austin;21.6
+Cotonou;16.1
+Riyadh;34.9
+Anadyr;-4.2
+Ürümqi;6.9
+Indianapolis;17.6

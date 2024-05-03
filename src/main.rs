@@ -9,20 +9,14 @@ mod approach_0;
 mod approach_1;
 mod approach_2;
 mod approach_3;
-
-struct Data {
-    min: f64,
-    max: f64,
-    sum: f64,
-    count: u64,
-}
+// mod approach_4;
 
 fn main() {
     // let path = Path::new("measurements_simple.txt");
     // let path = Path::new("measurements_1M.txt");
-    let path = Path::new("measurements_1G.txt");
+    let path = Path::new("measurements_100M.txt");
     // println!("approach_0: {:?}", timeit(|| approach_0::run(path), 32));
-    // println!("approach_1: {:?}", timeit(|| approach_1::run(path), 32));
+    // println!("approach_1: {:?}", timeit(|| approach_1::run(path), 2));
     // println!("approach_2: {:?}", timeit(|| approach_2::run(path), 2));
     println!("approach_3: {:?}", timeit(|| approach_3::run(path), 1));
 
