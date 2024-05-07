@@ -1,4 +1,6 @@
 #![feature(portable_simd)]
+#![feature(core_intrinsics)]
+#![feature(iter_map_windows)]
 
 use std::hash::{BuildHasher, Hash};
 use std::ops::{BitAnd, Not, Sub};
@@ -9,16 +11,28 @@ mod approach_0;
 mod approach_1;
 mod approach_2;
 mod approach_3;
-// mod approach_4;
+mod approach_4;
+mod approach_5;
+mod approach_6;
+mod approach_7;
+mod approach_8;
+mod approach_9;
 
 fn main() {
     // let path = Path::new("measurements_simple.txt");
     // let path = Path::new("measurements_1M.txt");
-    let path = Path::new("measurements_100M.txt");
-    // println!("approach_0: {:?}", timeit(|| approach_0::run(path), 32));
-    // println!("approach_1: {:?}", timeit(|| approach_1::run(path), 2));
-    // println!("approach_2: {:?}", timeit(|| approach_2::run(path), 2));
-    println!("approach_3: {:?}", timeit(|| approach_3::run(path), 1));
+    // let path = Path::new("measurements_100M.txt");
+    let path = Path::new("measurements_1G.txt");
+    // println!("approach_0: {:?}", timeit(|| approach_0::run(path), 5));
+    // println!("approach_1: {:?}", timeit(|| approach_1::run(path), 5));
+    // println!("approach_2: {:?}", timeit(|| approach_2::run(path), 5));
+    // println!("approach_3: {:?}", timeit(|| approach_3::run(path), 5));
+    // println!("approach_4: {:?}", timeit(|| approach_4::run(path), 5));
+    // println!("approach_5: {:?}", timeit(|| approach_5::run(path), 5));
+    // println!("approach_6: {:?}", timeit(|| approach_6::run(path), 5));
+    // println!("approach_7: {:?}", timeit(|| approach_7::run(path), 1));
+    // println!("approach_8: {:?}", timeit(|| approach_8::run(path), 1));
+    println!("approach_9: {:?}", timeit(|| approach_9::run(path), 1));
 
 
     // let pattern = u8x32::splat(0x0A);

@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::simd::cmp::SimdPartialEq;
 use std::simd::u8x32;
@@ -14,12 +15,18 @@ struct Data {
     count: u64,
 }
 
+const TABLE_SIZE: usize = 1 << 17;
+
 pub fn run(path: &Path) {
     let file = std::fs::File::open(path).unwrap();
     let mmap = unsafe { memmap2::Mmap::map(&file).unwrap() };
 
     let mut offset = Some(0);
-    let mut result: HashMap<Cow<str>, Data> = HashMap::new();
+    let mut result: Vec<Option<Data>> = Vec::with_capacity(TABLE_SIZE);
+    for _ in 0..TABLE_SIZE {
+        result.push(None);
+    }
+
     while let Some(o) = &offset {
         if *o >= mmap.len() {
             break;
@@ -27,20 +34,24 @@ pub fn run(path: &Path) {
         let (key, val, next_offset) = next(&mmap, *o);
         offset = next_offset;
         let key = Cow::Borrowed(unsafe { std::str::from_utf8_unchecked(key) });
-        let value = unsafe { std::str::from_utf8_unchecked(val) }.parse::<f64>().unwrap();
-        result.entry(key)
-            .and_modify(|e: &mut _| {
-                e.min = e.min.min(value);
-                e.max = e.max.max(value);
-                e.sum += value;
-                e.count += 1;
-            })
-            .or_insert_with(|| Data {
+        let value = fast_float::parse::<f64, _>(val).unwrap();
+        let mut hasher = ahash::AHasher::default();
+        key.hash(&mut hasher);
+        let idx = hasher.finish() as usize % TABLE_SIZE;
+        let entry = &mut result[idx];
+        if let Some(entry) = entry {
+            entry.min = entry.min.min(value);
+            entry.max = entry.max.max(value);
+            entry.sum += value;
+            entry.count += 1;
+        } else {
+            result[idx] = Some(Data {
                 min: value,
                 max: value,
                 sum: value,
                 count: 1,
             });
+        }
     }
     // println!("{:#?}", result);
 }
@@ -56,13 +67,17 @@ fn optimize_position<'a>(mmap: &'a memmap2::Mmap, position: usize) -> usize {
 
 #[inline]
 fn fill_by_slice(data: &[u8]) -> u8x32 {
+    if data.len() > 32 {
+        return u8x32::from_slice(data);
+    }
     let mut result = [0; 32];
     unsafe {
-        core::ptr::copy_nonoverlapping(data.as_ptr(), result.as_mut_ptr(), data.len().min(32));
+        core::ptr::copy_nonoverlapping(data.as_ptr(), result.as_mut_ptr(), data.len());
     }
-    u8x32::from_slice(&result)
+    return u8x32::from_slice(&result);
 }
 
+#[inline]
 fn next<'a>(mmap: &'a memmap2::Mmap, offset: usize) -> (&'a [u8], &'a [u8], Option<usize>) {
     let mut start = offset;
     let linefeed = fill_by_slice(&mmap[start..]).simd_eq(u8x32::splat(0x0A)).first_set();
@@ -75,15 +90,20 @@ fn next<'a>(mmap: &'a memmap2::Mmap, offset: usize) -> (&'a [u8], &'a [u8], Opti
             unreachable!()
         }
         (None, Some(s)) => {
-            for i in 32..mmap.len() {
-                if mmap[start + i] == 0x0A {
-                    return (&mmap[start..start + s], &mmap[start + s + 1..start + i], Some(start + i + 1));
-                }
-            }
-            (&mmap[start..], &mmap[start + s + 1..], None)
+            next_long(mmap, start, s)
         }
         (None, None) => {
-            (&mmap[start..], &mmap[start..], None)
+            unreachable!()
         }
     }
+}
+
+#[inline]
+fn next_long<'a>(mmap: &'a memmap2::Mmap, start: usize, semicolon: usize) -> (&'a [u8], &'a [u8], Option<usize>) {
+    for i in 32..mmap.len() {
+        if mmap[start + i] == 0x0A {
+            return (&mmap[start..start + semicolon], &mmap[start + semicolon + 1..start + i], Some(start + i + 1));
+        }
+    }
+    (&mmap[start..], &mmap[start + semicolon + 1..], None)
 }

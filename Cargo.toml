@@ -9,6 +9,8 @@ edition = "2021"
 rayon = { version = "1" }
 hashbrown = { version = "0.14.5" }
 memmap2 = { version = "0.9.4" }
+ahash = { version = "0.8.11" }
+fast-float = { version = "0.2.0" }
 
 [profile.release]
 debug = true

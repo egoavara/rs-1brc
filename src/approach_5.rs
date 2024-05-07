@@ -19,7 +19,7 @@ pub fn run(path: &Path) {
     let mmap = unsafe { memmap2::Mmap::map(&file).unwrap() };
 
     let mut offset = Some(0);
-    let mut result: HashMap<Cow<str>, Data> = HashMap::new();
+    let mut result: HashMap<Cow<str>, Data> = HashMap::with_capacity(100000);
     while let Some(o) = &offset {
         if *o >= mmap.len() {
             break;
@@ -56,11 +56,14 @@ fn optimize_position<'a>(mmap: &'a memmap2::Mmap, position: usize) -> usize {
 
 #[inline]
 fn fill_by_slice(data: &[u8]) -> u8x32 {
+    if data.len() > 32 {
+        return u8x32::from_slice(data);
+    }
     let mut result = [0; 32];
     unsafe {
-        core::ptr::copy_nonoverlapping(data.as_ptr(), result.as_mut_ptr(), data.len().min(32));
+        core::ptr::copy_nonoverlapping(data.as_ptr(), result.as_mut_ptr(), data.len());
     }
-    u8x32::from_slice(&result)
+    return u8x32::from_slice(&result);
 }
 
 fn next<'a>(mmap: &'a memmap2::Mmap, offset: usize) -> (&'a [u8], &'a [u8], Option<usize>) {
